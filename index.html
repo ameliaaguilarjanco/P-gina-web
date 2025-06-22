@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carta Divertida - ¿Eres Caca?</title>
+    <meta name="description" content="Carta divertida con juego interactivo">
+    <meta name="keywords" content="divertido, carta, juego, broma">
+    <meta property="og:title" content="Carta Divertida - ¿Eres Caca?">
+    <meta property="og:description" content="Carta divertida con juego interactivo">
+    <meta name="twitter:title" content="Carta Divertida - ¿Eres Caca?">
+    <meta name="twitter:description" content="Carta divertida con juego interactivo">
+    
+    <script src="https://resource.trickle.so/vendor_lib/unpkg/react@18/umd/react.production.min.js"></script>
+    <script src="https://resource.trickle.so/vendor_lib/unpkg/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://resource.trickle.so/vendor_lib/unpkg/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Fredoka+One&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            font-family: 'Comic Neue', cursive;
+            overflow: hidden;
+        }
+
+        .letter-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            height: 400px;
+            background: white;
+            border: 3px solid #ff6b6b;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(255, 107, 107, 0.3);
+            padding: 40px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .funny-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 2.5rem;
+            color: #ff6b6b;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .funny-text {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 40px;
+            line-height: 1.4;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Comic Neue', cursive;
+        }
+
+        .btn-yes {
+            background: #4ecdc4;
+            color: white;
+        }
+
+        .btn-yes:hover {
+            background: #45b7aa;
+            transform: scale(1.1);
+        }
+
+        .btn-no {
+            background: #ff6b6b;
+            color: white;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .btn-no:hover {
+            background: #ff5252;
+        }
+
+        .result-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            height: 300px;
+            background: #4ecdc4;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(78, 205, 196, 0.4);
+            padding: 40px;
+            text-align: center;
+            z-index: 20;
+        }
+
+        .result-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 3rem;
+            color: white;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .result-text {
+            font-size: 1.6rem;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .emoji {
+            font-size: 3rem;
+            margin: 0 10px;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ffd93d;
+            animation: confetti-fall 3s linear infinite;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        function ConfettiPiece({ x, delay, color }) {
+            try {
+                return (
+                    <div
+                        className="confetti"
+                        style={{
+                            left: `${x}px`,
+                            backgroundColor: color,
+                            animationDelay: `${delay}s`
+                        }}
+                    />
+                );
+            } catch (error) {
+                console.error('ConfettiPiece error:', error);
+                reportError(error);
+            }
+        }
+
+        function FunnyLetter() {
+            try {
+                const [showResult, setShowResult] = React.useState(false);
+                const [noButtonPosition, setNoButtonPosition] = React.useState({ x: 0, y: 0 });
+                const [confetti, setConfetti] = React.useState([]);
+
+                const handleYesClick = () => {
+                    setShowResult(true);
+                    createConfetti();
+                };
+
+                const handleNoClick = () => {
+                    const newX = Math.random() * 300 - 150;
+                    const newY = Math.random() * 200 - 100;
+                    setNoButtonPosition({ x: newX, y: newY });
+                };
+
+                const createConfetti = () => {
+                    const pieces = [];
+                    const colors = ['#ffd93d', '#ff6b6b', '#4ecdc4', '#45b7aa', '#96ceb4'];
+                    
+                    for (let i = 0; i < 50; i++) {
+                        pieces.push({
+                            id: i,
+                            x: Math.random() * window.innerWidth,
+                            delay: Math.random() * 2,
+                            color: colors[Math.floor(Math.random() * colors.length)]
+                        });
+                    }
+                    setConfetti(pieces);
+                };
+
+                const resetGame = () => {
+                    setShowResult(false);
+                    setNoButtonPosition({ x: 0, y: 0 });
+                    setConfetti([]);
+                };
+
+                if (showResult) {
+                    return (
+                        <div>
+                            {confetti.map(piece => (
+                                <ConfettiPiece
+                                    key={piece.id}
+                                    x={piece.x}
+                                    delay={piece.delay}
+                                    color={piece.color}
+                                />
+                            ))}
+                            
+                            <div className="result-container">
+                                <div className="result-title">
+                                    ¡Ya Sabía! 
+                                    <span className="emoji">😂</span>
+                                </div>
+                                
+                                <div className="result-text">
+                                    ¡Jajaja! Sabía que ibas a decir que sí
+                                    <br />
+                                    <span className="emoji">💩</span>
+                                    <span className="emoji">😜</span>
+                                    <span className="emoji">🤣</span>
+                                </div>
+                                
+                                <button 
+                                    className="btn btn-yes"
+                                    onClick={resetGame}
+                                    style={{marginTop: '20px'}}
+                                >
+                                    Jugar de Nuevo
+                                </button>
+                            </div>
+                        </div>
+                    );
+                }
+
+                return (
+                    <div className="letter-container">
+                        <div className="funny-title">
+                            ¡Hola! 
+                            <span className="emoji">👋</span>
+                        </div>
+                        
+                        <div className="funny-text">
+                            Ya me enteré...
+                            <br />
+                            <strong>¡Eres caca!</strong>
+                            <span className="emoji">💩</span>
+                            <br />
+                            ¿Es verdad?
+                        </div>
+                        
+                        <div className="button-container">
+                            <button 
+                                className="btn btn-yes"
+                                onClick={handleYesClick}
+                            >
+                                Sí 😅
+                            </button>
+                            
+                            <button 
+                                className="btn btn-no"
+                                onClick={handleNoClick}
+                                style={{
+                                    transform: `translate(${noButtonPosition.x}px, ${noButtonPosition.y}px)`
+                                }}
+                            >
+                                No 😤
+                            </button>
+                        </div>
+                    </div>
+                );
+            } catch (error) {
+                console.error('FunnyLetter error:', error);
+                reportError(error);
+            }
+        }
+
+        function App() {
+            try {
+                return (
+                    <div className="min-h-screen w-full relative">
+                        <FunnyLetter />
+                    </div>
+                );
+            } catch (error) {
+                console.error('App error:', error);
+                reportError(error);
+            }
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
